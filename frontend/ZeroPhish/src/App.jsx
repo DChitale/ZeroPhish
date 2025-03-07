@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./App.css";
 
 const App = () => {
@@ -7,6 +7,23 @@ const App = () => {
   const [emailContent, setEmailContent] = useState("");
   const [scanResults, setScanResults] = useState(null);
   const [error, setError] = useState("");
+  const [emails, setEmails] = useState([]);
+  const [showEmailSelector, setShowEmailSelector] = useState(false);
+  const [fetchingEmails, setFetchingEmails] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Check if user is already authenticated on component mount
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
+
+  const checkAuthStatus = () => {
+    chrome.runtime.sendMessage({ action: "getAuthToken", interactive: false }, (response) => {
+      if (response && response.success) {
+        setIsAuthenticated(true);
+      }
+    });
+  };
 
   const handleScan = async () => {
     setLoading(true);
@@ -15,38 +32,11 @@ const App = () => {
     setScanResults(null);
 
     try {
-      // For browser extension mode
-      if (typeof chrome !== 'undefined' && chrome.tabs) {
-        try {
-          // Get the active tab
-          const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-          
-          // Send a message to content.js to extract email content
-          const response = await chrome.tabs.sendMessage(tab.id, { action: "extractEmailContent" });
-          
-          const emailText = response?.result?.message || "No email content found.";
-          setEmailContent(emailText);
-          
-          // Continue with scanning the extracted content
-          await scanEmail(emailText);
-        } catch (chromeError) {
-          console.error("Chrome API error:", chromeError);
-          // Fall back to manual input if Chrome API fails
-          if (emailContent) {
-            await scanEmail(emailContent);
-          } else {
-            setError("Please enter email content to scan.");
-            setStatus("Error");
-          }
-        }
+      if (emailContent) {
+        await scanEmail(emailContent);
       } else {
-        // Web app mode - use the manually entered content
-        if (emailContent) {
-          await scanEmail(emailContent);
-        } else {
-          setError("Please enter email content to scan.");
-          setStatus("Error");
-        }
+        setError("Please select an email to scan.");
+        setStatus("Error");
       }
     } catch (error) {
       console.error("Error scanning email:", error);
@@ -60,7 +50,7 @@ const App = () => {
   const scanEmail = async (content) => {
     try {
       // Send extracted content to the backend API
-      const res = await fetch("http://localhost:5000/scan_email", {
+      const res = await fetch("http://localhost:5000/scan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: content }),
@@ -83,14 +73,194 @@ const App = () => {
     setEmailContent(e.target.value);
   };
 
+  const authenticateWithGmail = () => {
+    setFetchingEmails(true);
+    setError("");
+    
+    chrome.runtime.sendMessage({ action: "getAuthToken", interactive: true }, (response) => {
+      if (response && response.success) {
+        setIsAuthenticated(true);
+        fetchEmails(response.token);
+      } else {
+        setFetchingEmails(false);
+        setError("Authentication failed. Please try again.");
+        console.error("Auth error:", response?.error);
+      }
+    });
+  };
+
+  const fetchEmails = async (token) => {
+    try {
+      // Fetch list of messages
+      const messagesResponse = await fetch(
+        "https://www.googleapis.com/gmail/v1/users/me/messages?maxResults=10",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!messagesResponse.ok) {
+        throw new Error(`Failed to fetch messages: ${messagesResponse.status}`);
+      }
+
+      const messagesData = await messagesResponse.json();
+      const messageIds = messagesData.messages || [];
+
+      // Fetch details for each message
+      const emailDetails = await Promise.all(
+        messageIds.map(async (message) => {
+          const detailResponse = await fetch(
+            `https://www.googleapis.com/gmail/v1/users/me/messages/${message.id}?format=full`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (!detailResponse.ok) {
+            throw new Error(`Failed to fetch message details: ${detailResponse.status}`);
+          }
+
+          return detailResponse.json();
+        })
+      );
+
+      // Process email details
+      const processedEmails = emailDetails.map((email) => {
+        const headers = email.payload.headers;
+        const subject = headers.find((h) => h.name === "Subject")?.value || "No Subject";
+        const sender = headers.find((h) => h.name === "From")?.value || "Unknown Sender";
+        const date = new Date(parseInt(email.internalDate)).toLocaleString();
+        const snippet = email.snippet || "";
+
+        // Extract email body
+        let body = "";
+        if (email.payload.parts) {
+          const textPart = email.payload.parts.find(
+            (part) => part.mimeType === "text/plain"
+          );
+          if (textPart && textPart.body.data) {
+            body = atob(textPart.body.data.replace(/-/g, "+").replace(/_/g, "/"));
+          }
+        } else if (email.payload.body && email.payload.body.data) {
+          body = atob(email.payload.body.data.replace(/-/g, "+").replace(/_/g, "/"));
+        }
+
+        return {
+          id: email.id,
+          subject,
+          sender,
+          date,
+          snippet,
+          body,
+        };
+      });
+
+      setEmails(processedEmails);
+      setShowEmailSelector(true);
+    } catch (err) {
+      console.error("Error fetching emails:", err);
+      setError("Failed to fetch emails. Please try again.");
+    } finally {
+      setFetchingEmails(false);
+    }
+  };
+
+  const selectEmail = (email) => {
+    setEmailContent(email.body);
+    setShowEmailSelector(false);
+  };
+
+  const logoutFromGmail = () => {
+    chrome.runtime.sendMessage({ action: "revokeAuthToken" }, (response) => {
+      if (response && response.success) {
+        setIsAuthenticated(false);
+        setEmails([]);
+      } else {
+        setError("Failed to logout. Please try again.");
+      }
+    });
+  };
+
   return (
     <div className="popup-container">
       <h1 className="title">ZeroPhish</h1>
 
-      {/* Email input for web app mode */}
+      {/* Gmail Authentication Section */}
+      <div className="gmail-auth-section">
+        {isAuthenticated ? (
+          <div className="auth-status">
+            <span className="auth-status-text">✓ Connected to Gmail</span>
+            <button className="auth-btn logout" onClick={logoutFromGmail}>
+              Disconnect
+            </button>
+            <button 
+              className="select-email-btn" 
+              onClick={() => fetchEmails()} 
+              disabled={fetchingEmails}
+            >
+              {fetchingEmails ? "Loading Emails..." : "Select Email"}
+            </button>
+          </div>
+        ) : (
+          <button 
+            className="auth-btn login" 
+            onClick={authenticateWithGmail}
+            disabled={fetchingEmails}
+          >
+            {fetchingEmails ? "Connecting..." : "Connect to Gmail"}
+          </button>
+        )}
+      </div>
+
+      {/* Email selector modal */}
+      {showEmailSelector && (
+        <div className="email-selector-modal">
+          <div className="email-selector-content">
+            <div className="email-selector-header">
+              <h2>Select an Email</h2>
+              <button className="close-btn" onClick={() => setShowEmailSelector(false)}>×</button>
+            </div>
+            
+            {emails.length === 0 ? (
+              <p className="no-emails">No emails found.</p>
+            ) : (
+              <div className="email-list">
+                {emails.map((email) => (
+                  <div key={email.id} className="email-item" onClick={() => selectEmail(email)}>
+                    <div className="email-header">
+                      <span className="email-subject">{email.subject}</span>
+                      <span className="email-date">{email.date}</span>
+                    </div>
+                    <div className="email-sender">{email.sender}</div>
+                    <div className="email-snippet">{email.snippet}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Email content display */}
+      {emailContent && (
+        <div className="email-content-preview">
+          <h3>Email Content Preview</h3>
+          <div className="email-preview-text">
+            {emailContent.length > 150 
+              ? `${emailContent.substring(0, 150)}...` 
+              : emailContent}
+          </div>
+        </div>
+      )}
+
+      {/* Manual email input */}
       <div className="email-input">
         <textarea
-          placeholder="Paste email content here to scan..."
+          placeholder="Or paste email content here to scan..."
           value={emailContent}
           onChange={handleEmailChange}
           rows={5}
@@ -98,7 +268,7 @@ const App = () => {
       </div>
 
       <div className="scan-section">
-        <button className="scan-btn" onClick={handleScan} disabled={loading}>
+        <button className="scan-btn" onClick={handleScan} disabled={loading || !emailContent}>
           {loading ? "Scanning..." : "SCAN"}
         </button>
       </div>
@@ -118,7 +288,7 @@ const App = () => {
             <p>{scanResults.recommendation}</p>
           </div>
 
-          {scanResults.content_analysis.suspicious_phrases.length > 0 && (
+          {scanResults.content_analysis?.suspicious_phrases?.length > 0 && (
             <div className="suspicious-phrases">
               <h3>⚠️ Suspicious Phrases Detected</h3>
               <ul>
@@ -129,14 +299,14 @@ const App = () => {
             </div>
           )}
 
-          {scanResults.content_analysis.urgency_indicators > 0 && (
+          {scanResults.content_analysis?.urgency_indicators > 0 && (
             <div className="urgency-indicators">
               <h3>⏰ Urgency Indicators</h3>
               <p>This email contains {scanResults.content_analysis.urgency_indicators} urgency indicators, which are common in phishing attempts.</p>
             </div>
           )}
 
-          {Object.keys(scanResults.url_scan).length > 0 && (
+          {scanResults.url_scan && Object.keys(scanResults.url_scan).length > 0 && (
             <div className="url-scan">
               <h3>🔗 URL Scan Results</h3>
               <ul>
