@@ -1,35 +1,67 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useState } from "react";
+import "./App.css";
 
-function App() {
-  const [count, setCount] = useState(0)
+const App = () => {
+  const [isScanning, setIsScanning] = useState(false);
+  const [status, setStatus] = useState("idle");
+
+  const handleScan = () => {
+    setIsScanning(true);
+    setStatus("idle");
+
+    setTimeout(() => {
+      const isSafe = Math.random() > 0.3; // Randomly decide Safe or Not Safe
+      setStatus(isSafe ? "safe" : "not-safe");
+      setIsScanning(false);
+    }, 3000);
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
+    <div className="popup-container">
+      <h1 className="title">ZeroPhish</h1>
+
+      <div className="scan-section">
+        <button className="scan-btn" onClick={handleScan} disabled={isScanning}>
+          {isScanning ? "Scanning..." : "SCAN"}
         </button>
+      </div>
+
+      {isScanning && (
+        <div className="loading-bar">
+          <div className="progress"></div>
+        </div>
+      )}
+
+      <div className={`status ${status}`}>
+        {status === "idle"
+          ? "Click Scan to Check"
+          : status === "safe"
+          ? "Safe ✅"
+          : "Not Safe ❌"}
+      </div>
+
+      <div className="report-section">
+        <h2>Report</h2>
         <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
+          {status === "safe"
+            ? "No threats detected."
+            : status === "not-safe"
+            ? "Phishing detected!"
+            : "Awaiting scan..."}
         </p>
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
 
-export default App
+      <div className="tips">
+        <h3>🛡 Safety Tips</h3>
+        <ul>
+          <li>🔍 Check URLs before clicking.</li>
+          <li>✉️ Beware of unknown senders.</li>
+          <li>🔑 Enable two-factor authentication.</li>
+          <li>📢 Report suspicious emails.</li>
+        </ul>
+      </div>
+    </div>
+  );
+};
+
+export default App;

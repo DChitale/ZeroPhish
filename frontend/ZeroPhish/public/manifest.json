@@ -1,0 +1,19 @@
+{
+    "manifest_version": 3,
+    "name": "ZeroPhish1",
+    "version": "1.0",
+    "description": "A Chrome extension built to combat email spam and phishing.",
+    "action": {
+        "default_popup": "index.html"
+    },
+    "permissions": [
+        "storage",
+        "activeTab",
+        "scripting",
+        "tabs",
+        "webRequest"
+    ],
+    "icons": {
+        "128": "icon.png"
+    }
+}
