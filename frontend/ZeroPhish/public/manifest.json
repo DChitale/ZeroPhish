@@ -2,18 +2,32 @@
     "manifest_version": 3,
     "name": "ZeroPhish",
     "version": "1.0.0",
-    "description": "A Chrome extension built to combat email spam and phishing.",
+    "description": "A Chrome extension to detect phishing emails and links.",
     "action": {
-        "default_popup": "index.html"
+      "default_popup": "index.html",
+      "default_icon": "icon.png"
     },
-    "permissions": [
-        "storage",
-        "activeTab",
-        "scripting",
-        "tabs",
-        "webRequest"
+    "background": {
+      "service_worker": "background.js"
+    },
+    "content_scripts": [
+      {
+        "matches": [
+          "https://mail.google.com/*",
+          "https://outlook.live.com/*"
+        ],
+        "js": ["content.js"],
+        "run_at": "document_idle"
+      }
     ],
-    "icons": {
-        "128": "icon.png"
-    }
-}
+    "permissions": [
+      "activeTab",
+      "scripting",
+      "tabs",
+      "storage"
+    ],
+    "host_permissions": [
+      "http://127.0.0.1/scan"
+    ]
+  }
+  
