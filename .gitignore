@@ -172,3 +172,4 @@ cython_debug/
 backend/credentials.json
 backend/gmail.py
 backend/token.json
+frontend/ZeroPhish/public/credentials.json
