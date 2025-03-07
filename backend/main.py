@@ -3,8 +3,10 @@ import os
 import time
 import json
 import asyncio
+import re
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 load_dotenv(".env")
 API = os.getenv("VT_API")
@@ -14,6 +16,7 @@ if not API:
     exit()
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 
 async def scan_url(client, url):
@@ -59,26 +62,97 @@ async def process_urls(urls):
 
 def extract_urls(message):
     """Extracts URLs from the message using regex."""
-    import re
     url_regex = r'https?://[^\s,]+'
     return re.findall(url_regex, message)
 
 
+def analyze_email_content(email_content):
+    """Analyzes email content for phishing indicators."""
+    indicators = {
+        "suspicious_phrases": [],
+        "urgency_indicators": 0,
+        "grammar_issues": 0
+    }
+    
+    # Check for suspicious phrases
+    suspicious_phrases = [
+        "verify your account", "update your information", "confirm your details",
+        "unusual activity", "suspicious activity", "click here", "login to continue",
+        "your account will be suspended", "limited time offer", "act now"
+    ]
+    
+    for phrase in suspicious_phrases:
+        if phrase.lower() in email_content.lower():
+            indicators["suspicious_phrases"].append(phrase)
+    
+    # Check for urgency indicators
+    urgency_words = ["urgent", "immediately", "now", "today", "asap", "expires", "limited"]
+    for word in urgency_words:
+        if re.search(r'\b' + word + r'\b', email_content.lower()):
+            indicators["urgency_indicators"] += 1
+    
+    # Simple grammar check (very basic)
+    grammar_issues = ["to received", "kindly replied", "to confirmed", "your details is"]
+    for issue in grammar_issues:
+        if issue.lower() in email_content.lower():
+            indicators["grammar_issues"] += 1
+    
+    return indicators
+
+
 @app.route('/scan', methods=['POST'])
 def scan_data():
-    """Flask route to process incoming requests."""
+    """Flask route to process incoming requests for URL scanning."""
     data = request.get_json()
 
     if not data or "message" not in data:
         return jsonify({"error": "Invalid request"}), 400
 
     urls = extract_urls(data["message"])
-    print(urls)
+    print(f"Extracted URLs: {urls}")
 
     results = asyncio.run(process_urls(urls))
 
     return jsonify(results)
 
 
+@app.route('/scan_email', methods=['POST'])
+def scan_email():
+    """Flask route to process incoming email content."""
+    data = request.get_json()
+
+    if not data or "message" not in data:
+        return jsonify({"error": "Invalid request"}), 400
+
+    email_content = data["message"]
+    
+    # Extract and scan URLs
+    urls = extract_urls(email_content)
+    url_results = {}
+    if urls:
+        url_results = asyncio.run(process_urls(urls))
+    
+    # Analyze email content
+    content_analysis = analyze_email_content(email_content)
+    
+    # Determine overall safety
+    is_safe = True
+    if "UNSAFE" in url_results.values():
+        is_safe = False
+    if len(content_analysis["suspicious_phrases"]) > 1:
+        is_safe = False
+    if content_analysis["urgency_indicators"] >= 2:
+        is_safe = False
+    
+    response = {
+        "safe": is_safe,
+        "url_scan": url_results,
+        "content_analysis": content_analysis,
+        "recommendation": "This email appears to be safe." if is_safe else "This email shows signs of being a phishing attempt."
+    }
+    
+    return jsonify(response)
+
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')
