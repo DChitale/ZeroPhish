@@ -1,42 +1,220 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+.popup-container {
+  width: 400px;
+  max-width: 100%;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #d9534f;
+  margin-bottom: 15px;
+}
+
+.scan-section {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.scan-btn {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff5f6d, #ffb947);
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.scan-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+}
+
+.scan-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.loading-bar {
+  height: 4px;
+  width: 100%;
+  background-color: #e9ecef;
+  border-radius: 2px;
+  overflow: hidden;
+  margin: 10px 0;
+}
+
+.progress {
+  height: 100%;
+  width: 100%;
+  background-color: #007bff;
+  animation: loading 1.5s infinite ease-in-out;
+  transform-origin: 0% 50%;
+}
+
+@keyframes loading {
+  0% {
+    transform: scaleX(0);
+  }
+  50% {
+    transform: scaleX(0.5);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+.status {
+  margin: 15px 0;
+  padding: 10px;
+  border-radius: 5px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.safe {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.not-safe {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.error {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.error-message {
+  color: #721c24;
+  background-color: #f8d7da;
+  padding: 10px;
+  border-radius: 5px;
+  margin: 10px 0;
   text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.report-section {
+  background: white;
+  padding: 12px;
+  margin-top: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.tips {
+  margin-top: 15px;
+  text-align: left;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.tips h3 {
+  font-size: 15px;
+  margin-bottom: 5px;
+  color: black;
 }
 
-.card {
-  padding: 2em;
+.tips ul {
+  padding-left: 20px;
+  font-size: 13px;
+  color: black;
 }
 
-.read-the-docs {
-  color: #888;
+.tips li {
+  margin-bottom: 4px;
+  color: black;
+}
+
+/* New styles for email input */
+.email-input {
+  margin-bottom: 15px;
+}
+
+.email-input textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ced4da;
+  border-radius: 5px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+/* Results container styles */
+.results-container {
+  margin: 15px 0;
+  padding: 15px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.recommendation {
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.recommendation h3 {
+  color: #495057;
+  margin-bottom: 8px;
+}
+
+.recommendation p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.suspicious-phrases, .urgency-indicators, .url-scan {
+  margin-bottom: 15px;
+  padding: 10px;
+  border-radius: 5px;
+  background-color: #f8f9fa;
+}
+
+.suspicious-phrases h3, .urgency-indicators h3, .url-scan h3 {
+  color: #495057;
+  margin-bottom: 8px;
+  font-size: 16px;
+}
+
+.suspicious-phrases ul, .url-scan ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.suspicious-phrases li, .url-scan li {
+  margin-bottom: 5px;
+}
+
+.unsafe-url {
+  color: #721c24;
+}
+
+.safe-url {
+  color: #155724;
+}
+
+.unsafe {
+  font-weight: bold;
+  color: #dc3545;
+}
+
+.safe {
+  font-weight: bold;
+  color: #28a745;
 }
