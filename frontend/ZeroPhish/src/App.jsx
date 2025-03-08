@@ -272,7 +272,7 @@ const App = () => {
       {emailContent && (
         <div className="email-content-preview">
           <div className="email-preview-header">
-            <h3>Email Content Preview</h3>
+            <h3>Content Preview</h3>
             {isAuthenticated && (
               <button 
                 className="change-email-btn" 
@@ -294,7 +294,7 @@ const App = () => {
       {/* Manual email input */}
       <div className="email-input">
         <textarea
-          placeholder="Or paste email content here to scan..."
+          placeholder="Paste content here..."
           value={emailContent}
           onChange={handleEmailChange}
           rows={5}
@@ -336,7 +336,7 @@ const App = () => {
           {scanResults.content_analysis?.urgency_indicators > 0 && (
             <div className="urgency-indicators">
               <h3>⏰ Urgency Indicators</h3>
-              <p>This email contains {scanResults.content_analysis.urgency_indicators} urgency indicators, which are common in phishing attempts.</p>
+              <p>This content contains {scanResults.content_analysis.urgency_indicators} urgency indicators, which are common in phishing attempts.</p>
             </div>
           )}
 
