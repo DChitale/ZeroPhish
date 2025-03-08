@@ -50,7 +50,7 @@ const App = () => {
   const scanEmail = async (content) => {
     try {
       // Send extracted content to the backend API
-      const res = await fetch("http://localhost:5000/scan", {
+      const res = await fetch("http://localhost:5000/scan_email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: content }),
@@ -91,9 +91,27 @@ const App = () => {
 
   const fetchEmails = async (token) => {
     try {
+      setFetchingEmails(true);
+      
+      // If no token is provided, get it from background script
+      if (!token) {
+        return new Promise((resolve) => {
+          chrome.runtime.sendMessage({ action: "getAuthToken", interactive: false }, (response) => {
+            if (response && response.success) {
+              fetchEmails(response.token);
+              resolve();
+            } else {
+              setFetchingEmails(false);
+              setError("Failed to get authentication token. Please try again.");
+              resolve();
+            }
+          });
+        });
+      }
+      
       // Fetch list of messages
       const messagesResponse = await fetch(
-        "https://www.googleapis.com/gmail/v1/users/me/messages?maxResults=10",
+        "https://www.googleapis.com/gmail/v1/users/me/messages?maxResults=30",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -187,23 +205,27 @@ const App = () => {
 
   return (
     <div className="popup-container">
-      <h1 className="title">ZeroPhish</h1>
+      <header className="app-header">
+        <h1 className="title">ZeroPhish</h1>
+      </header>
 
       {/* Gmail Authentication Section */}
       <div className="gmail-auth-section">
         {isAuthenticated ? (
           <div className="auth-status">
             <span className="auth-status-text">✓ Connected to Gmail</span>
-            <button className="auth-btn logout" onClick={logoutFromGmail}>
-              Disconnect
-            </button>
-            <button 
-              className="select-email-btn" 
-              onClick={() => fetchEmails()} 
-              disabled={fetchingEmails}
-            >
-              {fetchingEmails ? "Loading Emails..." : "Select Email"}
-            </button>
+            <div className="button-group">
+              <button className="auth-btn logout" onClick={logoutFromGmail}>
+                Disconnect
+              </button>
+              <button 
+                className="select-email-btn" 
+                onClick={() => fetchEmails()} 
+                disabled={fetchingEmails}
+              >
+                {fetchingEmails ? "Loading Emails..." : "Select Email"}
+              </button>
+            </div>
           </div>
         ) : (
           <button 
@@ -248,7 +270,18 @@ const App = () => {
       {/* Email content display */}
       {emailContent && (
         <div className="email-content-preview">
-          <h3>Email Content Preview</h3>
+          <div className="email-preview-header">
+            <h3>Email Content Preview</h3>
+            {isAuthenticated && (
+              <button 
+                className="change-email-btn" 
+                onClick={() => fetchEmails()} 
+                disabled={fetchingEmails}
+              >
+                {fetchingEmails ? "Loading..." : "Change Email"}
+              </button>
+            )}
+          </div>
           <div className="email-preview-text">
             {emailContent.length > 150 
               ? `${emailContent.substring(0, 150)}...` 
@@ -312,7 +345,8 @@ const App = () => {
               <ul>
                 {Object.entries(scanResults.url_scan).map(([url, result], index) => (
                   <li key={index} className={result === "UNSAFE" ? "unsafe-url" : "safe-url"}>
-                    {url}: <span className={result === "UNSAFE" ? "unsafe" : "safe"}>{result}</span>
+                    <div className="url-text">{url}</div>
+                    <span className={result === "UNSAFE" ? "unsafe" : "safe"}>{result}</span>
                   </li>
                 ))}
               </ul>
