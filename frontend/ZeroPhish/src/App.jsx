@@ -272,7 +272,7 @@ const App = () => {
       {emailContent && (
         <div className="email-content-preview">
           <div className="email-preview-header">
-            <h3>Email Content Preview</h3>
+            <h3>Content Preview</h3>
             {isAuthenticated && (
               <button 
                 className="change-email-btn" 
