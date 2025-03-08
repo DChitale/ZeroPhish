@@ -346,7 +346,9 @@ const App = () => {
               <ul>
                 {Object.entries(scanResults.url_scan).map(([url, result], index) => (
                   <li key={index} className={result === "UNSAFE" ? "unsafe-url" : "safe-url"}>
-                    <div className="url-text">{url}</div>
+                    <div className="url-text" title={url}>
+                      {url.length > 40 ? `${url.substring(0, 37)}...` : url}
+                    </div>
                     <span className={result === "UNSAFE" ? "unsafe" : "safe"}>{result}</span>
                   </li>
                 ))}
