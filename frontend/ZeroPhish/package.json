@@ -1,17 +1,23 @@
 {
   "name": "zerophish",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "ZeroPhish application with frontend and backend",
   "type": "module",
+  "main": "gmail.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "node gmail.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "googleapis": "^118.0.0",
+    "@google-cloud/local-auth": "^2.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",

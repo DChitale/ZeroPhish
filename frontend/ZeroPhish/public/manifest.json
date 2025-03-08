@@ -24,10 +24,19 @@
       "activeTab",
       "scripting",
       "tabs",
-      "storage"
+      "storage",
+      "identity"
     ],
     "host_permissions": [
-      "http://127.0.0.1/scan"
-    ]
+      "http://localhost:5000/*",
+      "https://www.googleapis.com/*",
+      "https://mail.google.com/*"
+    ],
+    "oauth2": {
+      "client_id": "523937281058-86iiiq9l7q10fmjoo9io0li0j5j0isob.apps.googleusercontent.com",
+      "scopes": [
+        "https://www.googleapis.com/auth/gmail.readonly"
+      ]
+    }
   }
   
