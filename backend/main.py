@@ -89,13 +89,13 @@ def analyze_email_content(email_content):
     urgency_words = ["urgent", "immediately", "now", "today", "asap", "expires", "limited"]
     for word in urgency_words:
         if re.search(r'\b' + word + r'\b', email_content.lower()):
-            indicators["urgency_indicators"] += 1
+            indicators["urgency_indicators"] += 2
     
     # Simple grammar check (very basic)
     grammar_issues = ["to received", "kindly replied", "to confirmed", "your details is"]
     for issue in grammar_issues:
         if issue.lower() in email_content.lower():
-            indicators["grammar_issues"] += 1
+            indicators["grammar_issues"] += 2
     
     return indicators
 
@@ -137,18 +137,37 @@ def scan_email():
     
     # Determine overall safety
     is_safe = True
+    unsafe_reasons = []
+    
+    # Check for unsafe URLs
     if "UNSAFE" in url_results.values():
         is_safe = False
-    if len(content_analysis["suspicious_phrases"]) > 1:
+        unsafe_reasons.append("Contains potentially malicious URLs")
+    
+    # Check for suspicious phrases (increased threshold from 1 to 2)
+    if len(content_analysis["suspicious_phrases"]) >= 3:
         is_safe = False
+        unsafe_reasons.append(f"Contains {len(content_analysis['suspicious_phrases'])} suspicious phrases")
+    
+    # Check for urgency indicators (kept threshold at 2)
     if content_analysis["urgency_indicators"] >= 2:
         is_safe = False
+        unsafe_reasons.append(f"Contains {content_analysis['urgency_indicators']} urgency indicators")
+    
+    # Check for grammar issues
+    if content_analysis["grammar_issues"] >= 1:
+        is_safe = False
+        unsafe_reasons.append("Contains suspicious grammar patterns")
+    
+    recommendation = "This email appears to be safe." if is_safe else "This email shows signs of being a phishing attempt."
+    if not is_safe and unsafe_reasons:
+        recommendation += " Reasons: " + ", ".join(unsafe_reasons) + "."
     
     response = {
         "safe": is_safe,
         "url_scan": url_results,
         "content_analysis": content_analysis,
-        "recommendation": "This email appears to be safe." if is_safe else "This email shows signs of being a phishing attempt."
+        "recommendation": recommendation
     }
     
     return jsonify(response)

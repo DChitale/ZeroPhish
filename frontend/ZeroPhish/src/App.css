@@ -588,3 +588,59 @@ body {
   color: var(--text-color);
   word-break: break-all;
 }
+
+.safe-recommendation {
+  border-left: 4px solid var(--secondary-color);
+}
+
+.unsafe-recommendation {
+  border-left: 4px solid var(--danger-color);
+  background-color: rgba(234, 67, 53, 0.05);
+}
+
+.recommendation h3, 
+.suspicious-phrases h3, 
+.urgency-indicators h3, 
+.url-scan h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--text-color);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.debug-section {
+  margin-top: 20px;
+  border-top: 1px dashed var(--border-color);
+  padding-top: 15px;
+}
+
+.debug-toggle {
+  background-color: #f1f3f4;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 8px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--light-text);
+}
+
+.debug-toggle:hover {
+  background-color: #e8eaed;
+}
+
+.debug-info {
+  margin-top: 10px;
+  padding: 12px;
+  background-color: #f8f9fa;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-family: monospace;
+  font-size: 12px;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  max-height: 300px;
+  overflow-y: auto;
+}

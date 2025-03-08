@@ -11,6 +11,7 @@ const App = () => {
   const [showEmailSelector, setShowEmailSelector] = useState(false);
   const [fetchingEmails, setFetchingEmails] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showDebug, setShowDebug] = useState(false);
 
   // Check if user is already authenticated on component mount
   useEffect(() => {
@@ -316,8 +317,8 @@ const App = () => {
 
       {scanResults && (
         <div className="results-container">
-          <div className="recommendation">
-            <h3>📋 Recommendation</h3>
+          <div className={`recommendation ${scanResults.safe ? "safe-recommendation" : "unsafe-recommendation"}`}>
+            <h3>{scanResults.safe ? "✅ Recommendation" : "⚠️ Warning"}</h3>
             <p>{scanResults.recommendation}</p>
           </div>
 
@@ -364,6 +365,24 @@ const App = () => {
           <li>🔑 Enable two-factor authentication.</li>
         </ul>
       </div>
+
+      {/* Debug section - hidden by default */}
+      {scanResults && (
+        <div className="debug-section">
+          <button 
+            className="debug-toggle" 
+            onClick={() => setShowDebug(!showDebug)}
+          >
+            {showDebug ? "Hide Debug Info" : "Show Debug Info"}
+          </button>
+          
+          {showDebug && (
+            <pre className="debug-info">
+              {JSON.stringify(scanResults, null, 2)}
+            </pre>
+          )}
+        </div>
+      )}
     </div>
   );
 };
