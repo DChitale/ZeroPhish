@@ -159,7 +159,7 @@ def scan_email():
         is_safe = False
         unsafe_reasons.append("Contains suspicious grammar patterns")
     
-    recommendation = "This email appears to be safe." if is_safe else "This email shows signs of being a phishing attempt."
+    recommendation = "This content appears to be safe." if is_safe else "This content shows signs of being a phishing attempt."
     if not is_safe and unsafe_reasons:
         recommendation += " Reasons: " + ", ".join(unsafe_reasons) + "."
     
